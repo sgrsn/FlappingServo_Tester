@@ -14,7 +14,7 @@ using static COMPortSelector;
 static class SerialPortControl
 {
     private static SerialReceivedHandle _handle;
-    public static int[] Register = new int[32];
+    public static int[] Register = new int[64];
     private static bool enable_disconect = true;
     private const byte HEAD_BYTE = 0x1D;
     private const byte ESCAPE_BYTE = 0x1E;

@@ -13,11 +13,14 @@ using System.Windows;
 static class DumpDataToExcel
 {
     private static System.Timers.Timer timer_SaveData;
-    private const int tick_save_data = 200;
-    private static int[,] save_data = new int[1000, 2];
+    private const int tick_save_data = 5;
+    private static int[,] save_data = new int[1000, 5];
     private static int save_data_index = 0;
+    private static int v_ = 0;
+    private static int w_ = 0;
     private static int x_ = 0;
     private static int y_ = 0;
+    private static int z_ = 0;
 
     public static void StartLog()
     {
@@ -35,11 +38,36 @@ static class DumpDataToExcel
             save_data[save_data_index, 1] = y_;
         }
     }
+    public static void SaveData()
+    {
+        if (save_data_index < save_data.GetLength(0) - 1)
+        {
+            save_data_index++;
+            save_data[save_data_index, 0] = v_;
+            save_data[save_data_index, 1] = w_;
+            save_data[save_data_index, 2] = x_;
+            save_data[save_data_index, 3] = y_;
+            save_data[save_data_index, 4] = z_;
+        }
+    }
     public static void DumpDataToSave(int x, int y)
     {
         x_ = x;
         y_ = y;
-        
+    }
+    public static void DumpDataToSave(int x, int y, int z)
+    {
+        x_ = x;
+        y_ = y;
+        z_ = z;
+    }
+    public static void DumpDataToSave(int v, int w, int x, int y, int z)
+    {
+        v_ = v;
+        w_ = w;
+        x_ = x;
+        y_ = y;
+        z_ = z;
     }
     public static void SaveDataToExcelFile()
     {
@@ -57,9 +85,14 @@ static class DumpDataToExcel
         {
             Range rgn = ws1.Cells[1 + i, 1];
             rgn.Value2 = save_data[i, 0];
-
             rgn = ws1.Cells[1 + i, 2];
             rgn.Value2 = save_data[i, 1];
+            rgn = ws1.Cells[1 + i, 3];
+            rgn.Value2 = save_data[i, 2];
+            rgn = ws1.Cells[1 + i, 4];
+            rgn.Value2 = save_data[i, 3];
+            rgn = ws1.Cells[1 + i, 5];
+            rgn.Value2 = save_data[i, 4];
         }
 
         wb.SaveAs(ExcelBookFileName);

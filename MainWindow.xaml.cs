@@ -62,21 +62,27 @@ namespace Serial_to_Arduino
             this.Closing += new CancelEventHandler(StopTimer);
         }
 
+        private int update_count = 0;
         private void UpdateChartHandler()
         {
-            if (sim_control | slider_control)
+            update_count++;
+            _form1.UpdateDataToChart1((double)SerialPortControl.Register[CURRENT_COMMAND]);
+            _form1.UpdateDataToChart3((double)SerialPortControl.Register[MOTOR_DEGREE_1], SerialPortControl.Register[MOTOR_DEGREE_2]);
+
+            //if( (Math.Abs(SerialPortControl.Register[MOTOR_SPEED_INC])<10000 ) 
+            //        && ( Math.Abs(SerialPortControl.Register[MOTOR_SPEED_ABS]) < 10000) )
+            _form1.UpdateDataToChart4((double)SerialPortControl.Register[MOTOR_SPEED_1], SerialPortControl.Register[MOTOR_SPEED_2]);
+
+            //_form1.AddDataToChart2(Register[CURRENT_COMMAND], Register[MOTOR_SPEED_INC]);
+            //_form1.AddDataToChart2(myPort.Register[CURRENT_COMMAND], (double)myPort.Register[MOTOR_SPEED]);
+
+            if(update_count == 5)
             {
-                _form1.UpdateDataToChart1((double)SerialPortControl.Register[CURRENT_COMMAND]);
-                _form1.UpdateDataToChart3((double)SerialPortControl.Register[MOTOR_DEGREE_INC], SerialPortControl.Register[MOTOR_DEGREE_2]);
-
-                if( (Math.Abs(SerialPortControl.Register[MOTOR_SPEED_INC])<10000 ) 
-                        && ( Math.Abs(SerialPortControl.Register[MOTOR_SPEED_ABS]) < 10000) )
-                _form1.UpdateDataToChart4((double)SerialPortControl.Register[MOTOR_SPEED_INC], SerialPortControl.Register[MOTOR_SPEED_ABS]);
-
-                _form1.AddDataToChart2(Register[CURRENT_COMMAND], Register[MOTOR_SPEED_INC]);
-                //_form1.AddDataToChart2(myPort.Register[CURRENT_COMMAND], (double)myPort.Register[MOTOR_SPEED]);
-
-                DumpDataToSave(SerialPortControl.Register[CURRENT_COMMAND], SerialPortControl.Register[MOTOR_SPEED_INC]);
+                update_count = 0;
+                DumpDataToExcel.DumpDataToSave(SerialPortControl.Register[CURRENT_TIME], 
+                                                SerialPortControl.Register[MOTOR_DEGREE_1], SerialPortControl.Register[MOTOR_DEGREE_2], 
+                                                SerialPortControl.Register[MOTOR_SPEED_1], SerialPortControl.Register[MOTOR_SPEED_2]);
+                DumpDataToExcel.SaveData();
             }
         }
 
@@ -191,7 +197,7 @@ namespace Serial_to_Arduino
             SerialPortControl._WriteData((int)(motor_slider_value), COMMAND_MOTOR_CONFIRM);
         }
 
-        private void SendStart(Object source, ElapsedEventArgs e)
+        private void SliderSendStart(Object source, ElapsedEventArgs e)
         {
             if (IsConnected())
             {
@@ -210,8 +216,29 @@ namespace Serial_to_Arduino
             }
         }
 
+        private void WriteStart(Object source, ElapsedEventArgs e)
+        {
+            if (IsConnected())
+            {
+                if (SerialPortControl.Register[START_REPLY] == 0)
+                {
+                    Console.WriteLine("wait");
+                    SerialPortControl._WriteData(123, COMMAND_START);
+                }
+                else
+                {
+                    SerialPortControl.Register[START_REPLY] = 0;
+                    _timer.Stop();
+                    _timer.Dispose();
+                    //MotorSimlator.StartFlapping();
+                    MotorSimlator.StartSimulation();
+                }
+            }
+        }
+
         private void CommandStart()
         {
+            MotorSimlator.StopSimulation();
             if (sim_control)
             {
                 _timer.Stop();
@@ -220,8 +247,9 @@ namespace Serial_to_Arduino
             }
             if (!IsConnected()) return;
             slider_control = true;
-            SetTimer(tick_send_command, SendStart);
+            SetTimer(tick_send_command, SliderSendStart);
         }
+
         private void StopRadioButton_Checked(object sender, RoutedEventArgs e)
         {
             if (sim_control | slider_control)
@@ -239,7 +267,6 @@ namespace Serial_to_Arduino
         private void CommandRadioButton_Checked(object sender, RoutedEventArgs e)
         {
             if (!IsConnected()) return;
-            MotorSimlator.StopSimulation();
             CommandStart();
             SerialPortControl._WriteData(0, COMMAND_MODE);
         }
@@ -247,7 +274,6 @@ namespace Serial_to_Arduino
         private void PositionRadioButton_Checked(object sender, RoutedEventArgs e)
         {
             if (!IsConnected()) return;
-            MotorSimlator.StopSimulation();
             CommandStart();
             SerialPortControl._WriteData(1, COMMAND_MODE);
         }
@@ -255,7 +281,6 @@ namespace Serial_to_Arduino
         private void SpeedRadioButton_Checked(object sender, RoutedEventArgs e)
         {
             if (!IsConnected()) return;
-            MotorSimlator.StopSimulation();
             CommandStart();
             SerialPortControl._WriteData(2, COMMAND_MODE);
         }
@@ -268,7 +293,9 @@ namespace Serial_to_Arduino
                 _timer.Dispose();
                 slider_control = false;
             }
-            MotorSimlator.StartSimulation();
+            if (!IsConnected()) return;
+            SetTimer(tick_send_command, WriteStart);
+            SerialPortControl._WriteData(2, COMMAND_MODE);
         }
 
         private void SaveFileButton_Click(object sender, RoutedEventArgs e)

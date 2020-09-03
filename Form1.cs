@@ -45,6 +45,7 @@ namespace Serial_to_Arduino
         {
             UpdateData(chart3, "Degree1", y_values3, data);
             UpdateData(chart3, "Degree2", y_values4, data2);
+            SetMaxAxisValue(chart3, y_values4, data2);
         }
         public void UpdateDataToChart4(double data, double data2)
         {
@@ -72,14 +73,25 @@ namespace Serial_to_Arduino
                 {
                     c.Series[legend].Points.AddY(values[i]);
                 }
-                /*double e = Math.Abs(values[0] - data);
+            }
+        }
+
+        private void SetMaxAxisValue(Chart c, double[] values, double data)
+        {
+            if (c.InvokeRequired)
+            {
+                c.Invoke((MethodInvoker)delegate { SetMaxAxisValue(c, values, data); });
+            }
+            else
+            {
+                double e = Math.Abs(values[0] - data);
                 int min = (int)Math.Min(values[0], data);
                 int max = (int)Math.Max(values[0], data);
-                if(min < max)
+                if (min < max)
                 {
                     c.ChartAreas[0].AxisY.Maximum = max + e / 10;
                     c.ChartAreas[0].AxisY.Minimum = min - e / 10;
-                }*/
+                }
             }
         }
 
@@ -100,7 +112,7 @@ namespace Serial_to_Arduino
         private void ResetChart(Chart c, string legend)
         {
             double[] tmp_values = new double[1];
-            InitChart(c, legend, tmp_values, c.Series["Graph1"].ChartType);
+            InitChart(c, legend, tmp_values, c.Series[legend].ChartType);
         }
 
         private void InitChart(Chart c, string legend, double[] set_values, SeriesChartType type)

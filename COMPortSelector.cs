@@ -61,6 +61,7 @@ static class COMPortSelector
             ConnectButton.Content = "Disconnect";
             Console.WriteLine("Connected.");
             port.DataReceived += new SerialDataReceivedEventHandler(data_received_handle_);
+            port.DiscardInBuffer();
         }
         catch (Exception err)
         {
